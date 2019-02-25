@@ -1,29 +1,21 @@
-import mysql.connector
+import connection
 
 
-mydb = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        passwd="adminroot",
-        database="vkbots"
-    )
-
-
-def get_user_stats(user_id):
-    crs = mydb.cursor(buffered=True)
-    sql = "SELECT * FROM `accounts` WHERE `uid` = {user_id}"
-    crs.execute(sql)
-    row = crs.fetchone()
-    print(row)
+def GetUserStats(user_id):
+    connect = connection.getConnect()
     try:
-        if int(row['uid']) in int(user_id):
-            return int(row)
-        else:
-            sql = "INSERT INTO `accounts`(`uid`, `money`) VALUES ({user_id}, '500')"
-            val = [user_id]
-            crs.execute(sql, val)
-            sql = "SELECT * FROM `accounts` WHERE `uid` = {user_id}"
-            crs.execute(sql)
-            mydb.commit()
-    except:
-        print("ERROR")
+        while True:
+            with connect.cursor() as cursor:
+                sql = f"SELECT * FROM accounts WHERE uid = {user_id}"
+                result = cursor.execute(sql)  # Count records
+                row = cursor.fetchone()  # Take in the dictionary
+
+                if result >= 1:
+                    return row
+                else:
+                    cursor.execute(f"INSERT INTO accounts(uid, money) VALUES({user_id}, 500)")
+                    cursor.execute(f"SELECT * FROM accounts WHERE uid = {user_id}")
+                    connect.commit()
+                    return row
+    finally:
+        connect.close()
